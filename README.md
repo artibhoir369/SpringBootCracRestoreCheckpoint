@@ -158,6 +158,7 @@ rom-checkpoint
 We can see that restoration of checkpoint was very quick.
 
 Summary:
+
 Checkpoint/Restore in Userspace offers several benefits in terms of boot startup time for applications or services:
 Fast Application Startup: It allows for the quick restoration of a previously checkpointed application or service. This means that instead of starting from scratch, the application can resume from a saved state, significantly reducing the startup time.
 State Preservation: It captures and saves the complete state of an application, including its memory, CPU state, and open file descriptors. When restoring from a checkpoint, the application continues execution from where it left off, avoiding the need for time-consuming initialization steps.
