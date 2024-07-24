@@ -161,27 +161,27 @@ We can see that restoration of checkpoint was very quick.
 
 Checkpoint/Restore in Userspace  offers several benefits in terms of boot startup time for applications or services:
 
-# Fast Application Startup:
+## Fast Application Startup:
 
 Allows for the quick restoration of a previously checkpointed application or service.
 Applications can resume from a saved state, significantly reducing the startup time compared to starting from scratch.
 
-# State Preservation:
+## State Preservation:
 
 Captures and saves the complete state of an application, including memory, CPU state, and open file descriptors.
 Enables applications to continue execution seamlessly from where they left off after restoration.
 
-# Improved Resource Utilization:
+## Improved Resource Utilization:
 
 Reduces the time required for scaling operations in cloud environments.
 Facilitates faster scaling of applications and services based on demand, optimizing resource utilization.
 
-# Enhanced Availability:
+## Enhanced Availability:
 
 Enables rapid recovery from failures or system maintenance events.
 Minimizes downtime by quickly restoring applications from checkpoints, ensuring high availability in production environments.
 
-# Efficient Testing and Development:
+## Efficient Testing and Development:
 
 Provides developers with a means to capture and restore application states for testing and debugging purposes.
 Accelerates testing cycles by eliminating the need for repetitive initialization steps.
