@@ -147,8 +147,7 @@ Check the application logs:
 
 
 ```
-root@ip-172-31-39-178:/home/ubuntu/spring-petclinic# docker logs petclinic-app-container-f
-rom-checkpoint
+root@ip-172-31-39-178:/home/ubuntu/spring-petclinic# docker logs petclinic-app-container-from-checkpoint
 2024-07-24T11:41:57.920Z  INFO 129 --- [Attach Listener] o.s.c.support.DefaultLifecycleProcessor  : Restarting Spring-managed lifecycle beans after JVM restore
 2024-07-24T11:41:57.938Z  INFO 129 --- [Attach Listener] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
 2024-07-24T11:41:57.947Z  INFO 129 --- [Attach Listener] o.s.c.support.DefaultLifecycleProcessor  : Spring-managed lifecycle restart completed (restored JVM running for 102 ms)
