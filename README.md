@@ -158,8 +158,25 @@ rom-checkpoint
 We can see that restoration of checkpoint was very quick.
 
 Summary:
+Checkpoint/Restore in Userspace  offers several benefits in terms of boot startup time for applications or services:
 
-Checkpoint/Restore in Userspace offers several benefits in terms of boot startup time for applications or services:
-Fast Application Startup: It allows for the quick restoration of a previously checkpointed application or service. This means that instead of starting from scratch, the application can resume from a saved state, significantly reducing the startup time.
-State Preservation: It captures and saves the complete state of an application, including its memory, CPU state, and open file descriptors. When restoring from a checkpoint, the application continues execution from where it left off, avoiding the need for time-consuming initialization steps.
-Improved Resource Utilization: By reducing startup time, It enables faster scaling of applications and services. This capability is particularly beneficial in cloud environments where rapid scaling based on demand is essential.
+Fast Application Startup:
+
+Allows for the quick restoration of a previously checkpointed application or service.
+Applications can resume from a saved state, significantly reducing the startup time compared to starting from scratch.
+State Preservation:
+
+Captures and saves the complete state of an application, including memory, CPU state, and open file descriptors.
+Enables applications to continue execution seamlessly from where they left off after restoration.
+Improved Resource Utilization:
+
+Reduces the time required for scaling operations in cloud environments.
+Facilitates faster scaling of applications and services based on demand, optimizing resource utilization.
+Enhanced Availability:
+
+Enables rapid recovery from failures or system maintenance events.
+Minimizes downtime by quickly restoring applications from checkpoints, ensuring high availability in production environments.
+Efficient Testing and Development:
+
+Provides developers with a means to capture and restore application states for testing and debugging purposes.
+Accelerates testing cycles by eliminating the need for repetitive initialization steps.
