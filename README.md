@@ -1,4 +1,3 @@
-# SpringBootCracRestoreCheckpoint
 # Prepare a Spring Boot app with CRaC
 For our tutorial, we will use a Spring Boot reference application, Spring Petclinic.
 
