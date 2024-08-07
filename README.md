@@ -1,185 +1,162 @@
-# Prepare a Spring Boot app with CRaC
-For our tutorial, we will use a Spring Boot reference application, Spring Petclinic.
+# Spring PetClinic Sample Application [![Build Status](https://github.com/spring-projects/spring-petclinic/actions/workflows/maven-build.yml/badge.svg)](https://github.com/spring-projects/spring-petclinic/actions/workflows/maven-build.yml)
 
-First of all, clone the Spring Petclinic's repository:
-```
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/spring-projects/spring-petclinic) [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=7517918)
+
+## Understanding the Spring Petclinic application with a few diagrams
+
+[See the presentation here](https://speakerdeck.com/michaelisvy/spring-petclinic-sample-application)
+
+## Run Petclinic locally
+
+Spring Petclinic is a [Spring Boot](https://spring.io/guides/gs/spring-boot) application built using [Maven](https://spring.io/guides/gs/maven/) or [Gradle](https://spring.io/guides/gs/gradle/). You can build a jar file and run it from the command line (it should work just as well with Java 17 or newer):
+
+```bash
 git clone https://github.com/spring-projects/spring-petclinic.git
-```
-To use CRaC with the new Spring Boot and Spring Framework, we need to add the dependency for the org.crac/crac package to pom.xml:
-
-```
-<dependency>
-    <groupId>org.crac</groupId>
-    <artifactId>crac</artifactId>
-    <version>1.4.0</version>
-</dependency>
-```
-Let's check the difference of our updated pom.xml:
-```
-git diff
-diff --git a/pom.xml b/pom.xml
-index 287a08a..f403155 100644
---- a/pom.xml
-+++ b/pom.xml
-@@ -36,6 +36,11 @@
-   </properties>
-
-   <dependencies>
-+    <dependency>
-+        <groupId>org.crac</groupId>
-+        <artifactId>crac</artifactId>
-+        <version>1.4.0</version>
-+    </dependency>
-     <!-- Spring and Spring Boot dependencies -->
-     <dependency>
-       <groupId>org.springframework.boot</groupId>
-```
-Now, build the application with
-
-```
-mvn clean package
-```
-# Prepare a work directory for the application dump
-
-CRaC enables the developers to save the exact state of a running Java application (together with the information about the heap, JIT-compiled code, and so on). We need to create a work directory where the application dump will be stored after the checkpoint.
-
-For this purpose, run
-
-```
-mkdir -p storage/checkpoint-spring-petclinic
-```
-We should also copy the Petclinic's jar file to the “storage” to use in a docker container:
-
-
-```
-cp target/spring-petclinic-3.2.0-SNAPSHOT.jar ./storage/
-```
-# Start the application in a Docker container
-
-We will use the bellsoft/liberica-runtime-container:jdk-21-crac-slim-glibc image to start Petclinic and get the application dump for further restore. Note that BellSoft also provides images with musl libc.
-
-Another important prerequsite is the kernel version of the underlying Linux distribution, which should be at least 5.9. Linux kernel 5.9 introduces the CAP_CHECKPOINT_RESTORE option, which separates the checkpoint/restore functionality from the CAP_SYS_ADMIN option and enables the developers to steer clear of running containers with elevated permissions.
-
-The CAP_CHECKPOINT_RESTORE (and SYS_PTRACE, which is also required for checkpoint-restore) options are enabled with --cap-add flag added to newer Docker versions, so make sure you have the latest available Docker version.
-
-Use the following command to start the application in a Docker container:
-
-```
-docker run --cap-add CHECKPOINT_RESTORE --cap-add SYS_PTRACE -d -v $(pwd)/storage:/storage -w /storage --name petclinic-app-container bellsoft/liberica-runtime-container:jdk-21-crac-slim-glibc java -Xmx512m -XX:CRaCCheckpointTo=/storage/checkpoint-spring-petclinic -jar spring-petclinic-3.3.0-SNAPSHOT.jar
-```
-If you use a Linux distribution with an older kernel version, you can you the --priviledged flag instead of CAP_CHECKPOINT_RESTORE and SYS_PTRACE (however, this is not the best practice to run containers with elevated permissions).
-
-Now, let’s check the application output.
-
-```
-root@ip-172-31-39-178:/home/ubuntu/spring-petclinic# docker logs petclinic-app-container
-
-
-              |\      _,,,--,,_
-             /,`.-'`'   ._  \-;;,_
-  _______ __|,4-  ) )_   .;.(__`'-'__     ___ __    _ ___ _______
- |       | '---''(_/._)-'(_\_)   |   |   |   |  |  | |   |       |
- |    _  |    ___|_     _|       |   |   |   |   |_| |   |       | __ _ _
- |   |_| |   |___  |   | |       |   |   |   |       |   |       | \ \ \ \
- |    ___|    ___| |   | |      _|   |___|   |  _    |   |      _|  \ \ \ \
- |   |   |   |___  |   | |     |_|       |   | | |   |   |     |_    ) ) ) )
- |___|   |_______| |___| |_______|_______|___|_|  |__|___|_______|  / / / /
- ==================================================================/_/_/_/
-
-:: Built with Spring Boot :: 3.3.0
-
-
-2024-07-24T11:40:39.729Z  INFO 129 --- [           main] o.s.s.petclinic.PetClinicApplication     : Starting PetClinicApplication v3.3.0-SNAPSHOT using Java 21.0.3 with PID 129 (/storage/spring-petclinic-3.3.0-SNAPSHOT.jar started by root in /storage)
-2024-07-24T11:40:39.741Z  INFO 129 --- [           main] o.s.s.petclinic.PetClinicApplication     : No active profile set, falling back to 1 default profile: "default"
-2024-07-24T11:40:43.242Z  INFO 129 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2024-07-24T11:40:43.436Z  INFO 129 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 168 ms. Found 2 JPA repository interfaces.
-2024-07-24T11:40:45.546Z  INFO 129 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2024-07-24T11:40:45.572Z  INFO 129 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2024-07-24T11:40:45.573Z  INFO 129 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.24]
-2024-07-24T11:40:45.662Z  INFO 129 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2024-07-24T11:40:45.665Z  INFO 129 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 5681 ms
-2024-07-24T11:40:46.471Z  INFO 129 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2024-07-24T11:40:46.841Z  INFO 129 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:e5883060-41c2-4343-90b3-099c842bd38f user=SA
-2024-07-24T11:40:46.843Z  INFO 129 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2024-07-24T11:40:47.177Z  INFO 129 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2024-07-24T11:40:47.303Z  INFO 129 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
-2024-07-24T11:40:47.365Z  INFO 129 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2024-07-24T11:40:47.941Z  INFO 129 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2024-07-24T11:40:50.666Z  INFO 129 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2024-07-24T11:40:50.672Z  INFO 129 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2024-07-24T11:40:51.557Z  INFO 129 --- [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2024-07-24T11:40:55.500Z  INFO 129 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 14 endpoints beneath base path '/actuator'
-2024-07-24T11:40:55.698Z  INFO 129 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2024-07-24T11:40:55.743Z  INFO 129 --- [           main] o.s.s.petclinic.PetClinicApplication     : Started PetClinicApplication in 17.305 seconds (process running for 18.93)
-
-```
-We can see that The PetClinicApplication started in 17.305 seconds.
-
-# Perform the checkpoint to get the application dump
-The jcmd command is used to send the command to VM to make the checkpoint and dump the application and VM state to storage:
-
-```
-docker exec petclinic-app-container jcmd spring JDK.checkpoint
-```
-As a result, the Java instance with the Petclinic app will be dumped and the container will be stopped. The docker ps will show that the petclinic-app-container was stopped.
-
-You can check that the images for your application were dumped to the directory:
-
-```
-ls storage/checkpoint-spring-petclinic/
-
-core-129.img  core-133.img  core-137.img  core-141.img  core-145.img  core-151.img  core-156.img  core-160.img  core-165.img  core-208.img  core-212.img  fs-129.img     pagemap-129.img  stats-dump
-core-130.img  core-134.img  core-138.img  core-142.img  core-146.img  core-152.img  core-157.img  core-161.img  core-166.img  core-209.img  dump4.log     ids-129.img    pages-1.img      timens-0.img
-core-131.img  core-135.img  core-139.img  core-143.img  core-147.img  core-153.img  core-158.img  core-163.img  core-167.img  core-210.img  fdinfo-2.img  inventory.img  pstree.img
-core-132.img  core-136.img  core-140.img  core-144.img  core-150.img  core-154.img  core-159.img  core-164.img  core-207.img  core-211.img  files.img     mm-129.img     seccomp.img
+cd spring-petclinic
+./mvnw package
+java -jar target/*.jar
 ```
 
-# Use the prepared dump to start the application and the VM
+You can then access the Petclinic at <http://localhost:8080/>.
 
-Let’s start the application by restoring it from the dump. To do that, run
+<img width="1042" alt="petclinic-screenshot" src="https://cloud.githubusercontent.com/assets/838318/19727082/2aee6d6c-9b8e-11e6-81fe-e889a5ddfded.png">
 
+Or you can run it from Maven directly using the Spring Boot Maven plugin. If you do this, it will pick up changes that you make in the project immediately (changes to Java source files require a compile as well - most people use an IDE for this):
 
-```
-docker run --cap-add CHECKPOINT_RESTORE --cap-add SYS_PTRACE -it --rm -v $(pwd)/storage:/storage -w /storage -p 8080:8080 --name petclinic-app-container-from-checkpoint bellsoft/liberica-runtime-container:jdk-21-crac-slim-glibc java -XX:CRaCRestoreFrom=/storage/checkpoint-spring-petclinic
-```
-
-Check the application logs:
-
-
-```
-root@ip-172-31-39-178:/home/ubuntu/spring-petclinic# docker logs petclinic-app-container-from-checkpoint
-2024-07-24T11:41:57.920Z  INFO 129 --- [Attach Listener] o.s.c.support.DefaultLifecycleProcessor  : Restarting Spring-managed lifecycle beans after JVM restore
-2024-07-24T11:41:57.938Z  INFO 129 --- [Attach Listener] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2024-07-24T11:41:57.947Z  INFO 129 --- [Attach Listener] o.s.c.support.DefaultLifecycleProcessor  : Spring-managed lifecycle restart completed (restored JVM running for 102 ms)
+```bash
+./mvnw spring-boot:run
 ```
 
-We can see that restoration of checkpoint was very quick.
+> NOTE: If you prefer to use Gradle, you can build the app using `./gradlew build` and look for the jar file in `build/libs`.
 
-# Summary:
+## Building a Container
 
-Checkpoint/Restore in Userspace  offers several benefits in terms of boot startup time for applications or services:
+There is no `Dockerfile` in this project. You can build a container image (if you have a docker daemon) using the Spring Boot build plugin:
 
-## Fast Application Startup:
+```bash
+./mvnw spring-boot:build-image
+```
 
-Allows for the quick restoration of a previously checkpointed application or service.
-Applications can resume from a saved state, significantly reducing the startup time compared to starting from scratch.
+## In case you find a bug/suggested improvement for Spring Petclinic
 
-## State Preservation:
+Our issue tracker is available [here](https://github.com/spring-projects/spring-petclinic/issues).
 
-Captures and saves the complete state of an application, including memory, CPU state, and open file descriptors.
-Enables applications to continue execution seamlessly from where they left off after restoration.
+## Database configuration
 
-## Improved Resource Utilization:
+In its default configuration, Petclinic uses an in-memory database (H2) which
+gets populated at startup with data. The h2 console is exposed at `http://localhost:8080/h2-console`,
+and it is possible to inspect the content of the database using the `jdbc:h2:mem:<uuid>` URL. The UUID is printed at startup to the console.
 
-Reduces the time required for scaling operations in cloud environments.
-Facilitates faster scaling of applications and services based on demand, optimizing resource utilization.
+A similar setup is provided for MySQL and PostgreSQL if a persistent database configuration is needed. Note that whenever the database type changes, the app needs to run with a different profile: `spring.profiles.active=mysql` for MySQL or `spring.profiles.active=postgres` for PostgreSQL. See the [Spring Boot documentation](https://docs.spring.io/spring-boot/how-to/properties-and-configuration.html#howto.properties-and-configuration.set-active-spring-profiles) for more detail on how to set the active profile.
 
-## Enhanced Availability:
+You can start MySQL or PostgreSQL locally with whatever installer works for your OS or use docker:
 
-Enables rapid recovery from failures or system maintenance events.
-Minimizes downtime by quickly restoring applications from checkpoints, ensuring high availability in production environments.
+```bash
+docker run -e MYSQL_USER=petclinic -e MYSQL_PASSWORD=petclinic -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=petclinic -p 3306:3306 mysql:8.4
+```
 
-## Efficient Testing and Development:
+or
 
-Provides developers with a means to capture and restore application states for testing and debugging purposes.
-Accelerates testing cycles by eliminating the need for repetitive initialization steps.
+```bash
+docker run -e POSTGRES_USER=petclinic -e POSTGRES_PASSWORD=petclinic -e POSTGRES_DB=petclinic -p 5432:5432 postgres:16.3
+```
+
+Further documentation is provided for [MySQL](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/resources/db/mysql/petclinic_db_setup_mysql.txt)
+and [PostgreSQL](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/resources/db/postgres/petclinic_db_setup_postgres.txt).
+
+Instead of vanilla `docker` you can also use the provided `docker-compose.yml` file to start the database containers. Each one has a profile just like the Spring profile:
+
+```bash
+docker-compose --profile mysql up
+```
+
+or
+
+```bash
+docker-compose --profile postgres up
+```
+
+## Test Applications
+
+At development time we recommend you use the test applications set up as `main()` methods in `PetClinicIntegrationTests` (using the default H2 database and also adding Spring Boot Devtools), `MySqlTestApplication` and `PostgresIntegrationTests`. These are set up so that you can run the apps in your IDE to get fast feedback and also run the same classes as integration tests against the respective database. The MySql integration tests use Testcontainers to start the database in a Docker container, and the Postgres tests use Docker Compose to do the same thing.
+
+## Compiling the CSS
+
+There is a `petclinic.css` in `src/main/resources/static/resources/css`. It was generated from the `petclinic.scss` source, combined with the [Bootstrap](https://getbootstrap.com/) library. If you make changes to the `scss`, or upgrade Bootstrap, you will need to re-compile the CSS resources using the Maven profile "css", i.e. `./mvnw package -P css`. There is no build profile for Gradle to compile the CSS.
+
+## Working with Petclinic in your IDE
+
+### Prerequisites
+
+The following items should be installed in your system:
+
+- Java 17 or newer (full JDK, not a JRE)
+- [Git command line tool](https://help.github.com/articles/set-up-git)
+- Your preferred IDE
+  - Eclipse with the m2e plugin. Note: when m2e is available, there is an m2 icon in `Help -> About` dialog. If m2e is
+  not there, follow the install process [here](https://www.eclipse.org/m2e/)
+  - [Spring Tools Suite](https://spring.io/tools) (STS)
+  - [IntelliJ IDEA](https://www.jetbrains.com/idea/)
+  - [VS Code](https://code.visualstudio.com)
+
+### Steps
+
+1. On the command line run:
+
+    ```bash
+    git clone https://github.com/spring-projects/spring-petclinic.git
+    ```
+
+1. Inside Eclipse or STS:
+
+    Open the project via `File -> Import -> Maven -> Existing Maven project`, then select the root directory of the cloned repo.
+
+    Then either build on the command line `./mvnw generate-resources` or use the Eclipse launcher (right-click on project and `Run As -> Maven install`) to generate the CSS. Run the application's main method by right-clicking on it and choosing `Run As -> Java Application`.
+
+1. Inside IntelliJ IDEA:
+
+    In the main menu, choose `File -> Open` and select the Petclinic [pom.xml](pom.xml). Click on the `Open` button.
+
+    - CSS files are generated from the Maven build. You can build them on the command line `./mvnw generate-resources` or right-click on the `spring-petclinic` project then `Maven -> Generates sources and Update Folders`.
+
+    - A run configuration named `PetClinicApplication` should have been created for you if you're using a recent Ultimate version. Otherwise, run the application by right-clicking on the `PetClinicApplication` main class and choosing `Run 'PetClinicApplication'`.
+
+1. Navigate to the Petclinic
+
+    Visit [http://localhost:8080](http://localhost:8080) in your browser.
+
+## Looking for something in particular?
+
+|Spring Boot Configuration | Class or Java property files  |
+|--------------------------|---|
+|The Main Class | [PetClinicApplication](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/PetClinicApplication.java) |
+|Properties Files | [application.properties](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/resources) |
+|Caching | [CacheConfiguration](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/system/CacheConfiguration.java) |
+
+## Interesting Spring Petclinic branches and forks
+
+The Spring Petclinic "main" branch in the [spring-projects](https://github.com/spring-projects/spring-petclinic)
+GitHub org is the "canonical" implementation based on Spring Boot and Thymeleaf. There are
+[quite a few forks](https://spring-petclinic.github.io/docs/forks.html) in the GitHub org
+[spring-petclinic](https://github.com/spring-petclinic). If you are interested in using a different technology stack to implement the Pet Clinic, please join the community there.
+
+## Interaction with other open-source projects
+
+One of the best parts about working on the Spring Petclinic application is that we have the opportunity to work in direct contact with many Open Source projects. We found bugs/suggested improvements on various topics such as Spring, Spring Data, Bean Validation and even Eclipse! In many cases, they've been fixed/implemented in just a few days.
+Here is a list of them:
+
+| Name | Issue |
+|------|-------|
+| Spring JDBC: simplify usage of NamedParameterJdbcTemplate | [SPR-10256](https://jira.springsource.org/browse/SPR-10256) and [SPR-10257](https://jira.springsource.org/browse/SPR-10257) |
+| Bean Validation / Hibernate Validator: simplify Maven dependencies and backward compatibility |[HV-790](https://hibernate.atlassian.net/browse/HV-790) and [HV-792](https://hibernate.atlassian.net/browse/HV-792) |
+| Spring Data: provide more flexibility when working with JPQL queries | [DATAJPA-292](https://jira.springsource.org/browse/DATAJPA-292) |
+
+## Contributing
+
+The [issue tracker](https://github.com/spring-projects/spring-petclinic/issues) is the preferred channel for bug reports, feature requests and submitting pull requests.
+
+For pull requests, editor preferences are available in the [editor config](.editorconfig) for easy use in common text editors. Read more and download plugins at <https://editorconfig.org>. If you have not previously done so, please fill out and submit the [Contributor License Agreement](https://cla.pivotal.io/sign/spring).
+
+## License
+
+The Spring PetClinic sample application is released under version 2.0 of the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
